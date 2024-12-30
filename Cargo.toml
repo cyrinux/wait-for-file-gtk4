@@ -1,0 +1,10 @@
+[package]
+name = "wait_for_file"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gtk4 = "0.6"
+glib = "0.14"
+gio = "0.14"
+clap = { version = "4.5", features = ["derive", "env"] }
