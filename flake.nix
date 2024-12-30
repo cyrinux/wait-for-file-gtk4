@@ -33,10 +33,10 @@
           buildInputs = [
             pkgs.gtk4
           ];
+        };
 
-          devShell = with pkgs; mkShell {
-            buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy pkg-config ];
-          };
+        devShell = with pkgs; mkShell {
+          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy pkg-config gtk4 ];
         };
 
         # For convenience, these let you do `nix run .`, `nix build .`, etc.
