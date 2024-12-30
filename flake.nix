@@ -6,6 +6,7 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
+
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -21,8 +22,7 @@
 
           # A placeholder, so the first build will fail and tell you the correct sha256.
           # Then copy the correct value from the error message.
-          cargoSha256 = "sha256-KBEZAYkaJPkGFv+RoeWfcG9qHON0sW45yD+xJDD2mkk=";
-          # cargoSha256 = pkgs.lib.fakeSha256;
+          cargoSha256 = "sha256-uHkydKYGaIsBSFYFxjubZXIyVU4D3g4RlKx+G43J0iw=";
 
           # Native build inputs for GTK4
           nativeBuildInputs = [
@@ -33,6 +33,10 @@
           buildInputs = [
             pkgs.gtk4
           ];
+
+          devShell = with pkgs; mkShell {
+            buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy pkg-config ];
+          };
         };
 
         # For convenience, these let you do `nix run .`, `nix build .`, etc.

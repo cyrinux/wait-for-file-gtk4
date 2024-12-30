@@ -1,6 +1,8 @@
 use clap::Parser;
 use gtk4::prelude::*;
-use gtk4::{Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, ProgressBar};
+use gtk4::{
+    Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, ProgressBar,
+};
 use glib::MainContext;
 use std::process::Command;
 use std::sync::{
@@ -14,7 +16,7 @@ use std::time::Duration;
 #[derive(Parser, Debug)]
 #[command(
     name = "wait_for_file",
-    about = "A GTK4 app that waits for a file, then runs a command.\nAlso supports an 'Unlock' button for an optional background command."
+    about = "A GTK4 app that waits for a file, then runs a command.\nAlso supports a customizable 'Unlock' button."
 )]
 struct Args {
     /// File path to wait for (once it appears, we run --command)
@@ -25,14 +27,27 @@ struct Args {
     #[arg(short, long)]
     pub command: String,
 
-    /// Command to run when clicking the 'Unlock' button
-    #[arg(short, long, default_value = "open-vault")]
+    /// Customizable unlock button in the format "Label:Command"
+    /// (e.g., "Unlock:open-vault"). Defaults to "Unlock:open-vault".
+    #[arg(short, long, default_value = "Unlock:open-vault")]
     pub unlock_command: String,
+}
+
+fn parse_unlock_command(unlock_command: &str) -> (String, String) {
+    let parts: Vec<&str> = unlock_command.splitn(2, ':').collect();
+    if parts.len() == 2 {
+        (parts[0].to_string(), parts[1].to_string())
+    } else {
+        ("Unlock".to_string(), unlock_command.to_string())
+    }
 }
 
 fn main() {
     // Parse CLI arguments with Clap
     let args = Args::parse();
+
+    // Parse the unlock command into label and command
+    let (unlock_label, unlock_command) = parse_unlock_command(&args.unlock_command);
 
     // Create the GTK4 application
     let app = Application::builder()
@@ -41,10 +56,10 @@ fn main() {
 
     // Move arguments into the connect_activate closure
     app.connect_activate(move |app| {
-        // Capture the arguments for use within this closure
         let presence_file = args.presence_file.clone();
         let main_command = args.command.clone();
-        let unlock_command = args.unlock_command.clone();
+        let unlock_label = unlock_label.clone();
+        let unlock_command = unlock_command.clone();
 
         // -------------------------------------------------------------------
         // A) Create a glib channel + background thread in the same scope
@@ -60,13 +75,11 @@ fn main() {
             thread::spawn(move || {
                 while is_running_clone.load(Ordering::SeqCst) {
                     if std::path::Path::new(&presence_file_clone).exists() {
-                        // File found => run the main command
                         let _ = Command::new("sh")
                             .arg("-c")
                             .arg(&main_command_clone)
                             .spawn();
 
-                        // Notify the main thread that the file is found
                         let _ = tx_file_found.send(());
                         break;
                     }
@@ -82,7 +95,7 @@ fn main() {
             .application(app)
             .title("Waiting for File")
             .default_width(400)
-            .default_height(150)
+            .default_height(250)
             .build();
 
         let vbox = GtkBox::new(Orientation::Vertical, 10);
@@ -91,22 +104,22 @@ fn main() {
         vbox.set_margin_start(20);
         vbox.set_margin_end(20);
 
-        // Show which file we're waiting on
         let label = Label::new(Some(&format!(
             "Waiting for file: {}",
             presence_file
         )));
+        label.set_margin_bottom(10);
         vbox.append(&label);
 
-        // A pulsing ProgressBar
         let progress_bar = ProgressBar::new();
         progress_bar.set_show_text(false);
+        progress_bar.set_margin_bottom(10);
         vbox.append(&progress_bar);
 
-        // Two buttons: "Unlock" and "Cancel"
-        let hbox = GtkBox::new(Orientation::Horizontal, 5);
+        let hbox = GtkBox::new(Orientation::Horizontal, 10);
+        hbox.set_halign(gtk4::Align::Center);
 
-        let button_unlock = Button::with_label("Unlock");
+        let button_unlock = Button::with_label(&unlock_label);
         hbox.append(&button_unlock);
 
         let button_cancel = Button::with_label("Cancel");
@@ -116,7 +129,7 @@ fn main() {
         window.set_child(Some(&vbox));
         window.show();
 
-        // B1) If "Unlock" is clicked => run the unlock_command in background
+        // B1) If the custom button is clicked => run the corresponding command
         {
             let unlock_command_clone = unlock_command.clone();
             button_unlock.connect_clicked(move |_btn| {
