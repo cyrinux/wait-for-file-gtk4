@@ -1,5 +1,5 @@
 [package]
-name = "wait_for_file"
+name = "wait-for-file"
 version = "0.1.0"
 edition = "2021"
 
