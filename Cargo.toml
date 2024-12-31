@@ -1,7 +1,17 @@
+
 [package]
 name = "wait-for-file"
 version = "0.1.0"
 edition = "2021"
+authors = ["Cyrinux <crates@levis.name>"]
+description = "GTK4 app that wait for file, start a command, with extra button."
+license = "MIT"
+repository = "https://github.com/cyrinux/wait-for-file-gtk4"
+readme = "README.md"
+keywords = ["gtk4", "file", "monitor", "command", "launcher"]
+categories = ["gui", "filesystem"]
+rust-version = "1.83"
+
 
 [dependencies]
 gtk4 = "0.6"
