@@ -1,9 +1,9 @@
 use clap::Parser;
+use glib::MainContext;
 use gtk4::prelude::*;
 use gtk4::{
-    Application, ApplicationWindow, Box as GtkBox, Button, Label, Orientation, ProgressBar,
+    Application, ApplicationWindow, Box as GtkBox, Button, Image, Label, Orientation, ProgressBar,
 };
-use glib::MainContext;
 use std::process::Command;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -29,8 +29,12 @@ struct Args {
 
     /// Customizable unlock button in the format "Label:Command"
     /// (e.g., "Unlock:open-vault"). Defaults to "Unlock:open-vault".
-    #[arg(short, long, default_value = "Unlock:open-vault")]
+    #[arg(short, long, default_value = "Unlock:open-vault 120s")]
     pub unlock_command: String,
+
+    /// Optional icon to display on the left side of the box (standard GTK4 icon name or path to a file)
+    #[arg(short, long)]
+    pub icon: Option<String>,
 }
 
 fn parse_unlock_command(unlock_command: &str) -> (String, String) {
@@ -60,6 +64,7 @@ fn main() {
         let main_command = args.command.clone();
         let unlock_label = unlock_label.clone();
         let unlock_command = unlock_command.clone();
+        let icon_spec = args.icon.clone();
 
         // -------------------------------------------------------------------
         // A) Create a glib channel + background thread in the same scope
@@ -91,23 +96,25 @@ fn main() {
         // -------------------------------------------------------------------
         // B) Build the GUI
         // -------------------------------------------------------------------
-        let window = ApplicationWindow::builder()
-            .application(app)
-            .title("Waiting for File")
-            .default_width(400)
-            .default_height(250)
-            .build();
+        let main_box = GtkBox::new(Orientation::Horizontal, 10);
+        main_box.set_margin_top(20);
+        main_box.set_margin_bottom(20);
+        main_box.set_margin_start(20);
+        main_box.set_margin_end(20);
+
+        // Add the optional icon on the left
+        if let Some(icon_spec) = icon_spec {
+            let image = if std::path::Path::new(&icon_spec).exists() {
+                Image::from_file(icon_spec)
+            } else {
+                Image::from_icon_name(&icon_spec)
+            };
+            main_box.append(&image);
+        }
 
         let vbox = GtkBox::new(Orientation::Vertical, 10);
-        vbox.set_margin_top(20);
-        vbox.set_margin_bottom(20);
-        vbox.set_margin_start(20);
-        vbox.set_margin_end(20);
 
-        let label = Label::new(Some(&format!(
-            "Waiting for file: {}",
-            presence_file
-        )));
+        let label = Label::new(Some(&format!("Waiting for file: {}", presence_file)));
         label.set_margin_bottom(10);
         vbox.append(&label);
 
@@ -126,7 +133,15 @@ fn main() {
         hbox.append(&button_cancel);
 
         vbox.append(&hbox);
-        window.set_child(Some(&vbox));
+        main_box.append(&vbox);
+        let window = ApplicationWindow::builder()
+            .application(app)
+            .title("Waiting for File")
+            .default_width(300)
+            .default_height(150)
+            .child(&main_box)
+            .build();
+
         window.show();
 
         // B1) If the custom button is clicked => run the corresponding command

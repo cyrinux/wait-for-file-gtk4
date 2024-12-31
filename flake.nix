@@ -25,18 +25,20 @@
           cargoSha256 = "sha256-uHkydKYGaIsBSFYFxjubZXIyVU4D3g4RlKx+G43J0iw=";
 
           # Native build inputs for GTK4
-          nativeBuildInputs = [
-            pkgs.pkg-config
+          nativeBuildInputs = with pkgs; [
+            pkg-config
           ];
 
           # Libraries needed at build/run time
-          buildInputs = [
-            pkgs.gtk4
+          buildInputs = with pkgs; [
+            gtk4
+            gtk3
+            gdk-pixbuf
           ];
         };
 
         devShell = with pkgs; mkShell {
-          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy pkg-config gtk4 ];
+          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy pkg-config gtk4 gtk3 ];
         };
 
         # For convenience, these let you do `nix run .`, `nix build .`, etc.

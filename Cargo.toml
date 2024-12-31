@@ -8,3 +8,4 @@ gtk4 = "0.6"
 glib = "0.14"
 gio = "0.14"
 clap = { version = "4.5", features = ["derive", "env"] }
+gdk = "0.18.2"
