@@ -19,7 +19,7 @@
 
           src = ./.;
 
-          cargoHash = "sha256-uHkydKYGaIsBSFYFxjubZXIyVU4D3g4RlKx+G43J0iw=";
+          cargoHash = "sha256-+1ouLQpGqZbMFxiQ7k+zh4uii4nbVcP9H1qRcSOGmW8=";
 
           # Native build inputs for GTK4
           nativeBuildInputs = with pkgs; [
