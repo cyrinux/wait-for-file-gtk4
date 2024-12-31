@@ -1,4 +1,5 @@
 use clap::Parser;
+use gdk4::Key;
 use glib::MainContext;
 use gtk4::prelude::*;
 use gtk4::{
@@ -28,7 +29,7 @@ struct Args {
     pub command: String,
 
     /// Customizable unlock button in the format "Label:Command"
-    /// (e.g., "Unlock:open-vault"). Defaults to "Unlock:open-vault".
+    /// (e.g., "Unlock:open-vault"). Defaults to "Unlock:open-vault 120s".
     #[arg(short, long, default_value = "Unlock:open-vault 120s")]
     pub unlock_command: String,
 
@@ -141,6 +142,21 @@ fn main() {
             .default_height(150)
             .child(&main_box)
             .build();
+
+        // Handle Escape key to cancel
+        let is_running_clone = Arc::clone(&is_running);
+        let app_clone = app.clone();
+        let key_controller = gtk4::EventControllerKey::new();
+        key_controller.connect_key_pressed(move |_, keyval, _, _| {
+            if keyval == Key::Escape {
+                is_running_clone.store(false, Ordering::SeqCst);
+                app_clone.quit();
+                gtk4::Inhibit(true)
+            } else {
+                gtk4::Inhibit(false)
+            }
+        });
+        window.add_controller(key_controller);
 
         window.show();
 
