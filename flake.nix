@@ -18,6 +18,7 @@
           version = "0.1.0";
 
           src = ./.;
+          meta.mainProgram = "wait-for-file";
 
           cargoHash = "sha256-+1ouLQpGqZbMFxiQ7k+zh4uii4nbVcP9H1qRcSOGmW8=";
 
