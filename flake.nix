@@ -1,5 +1,5 @@
 {
-  description = "Rust + GTK4: wait for file, with extra button.";
+  description = "GTK4 app that wait for file, start a command, with extra button.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -14,7 +14,7 @@
       in
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
-          pname = "wait_for_file";
+          pname = "wait-for-file";
           version = "0.1.0";
 
           # Use the current directory (which must contain Cargo.toml, Cargo.lock, src/main.rs, etc.)
