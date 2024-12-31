@@ -6,42 +6,33 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-
   outputs = { self, nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
+        commonInputs = with pkgs; [
+          gtk4
+          gtk3
+          pkg-config
+        ];
       in
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "wait-for-file";
           version = "0.1.0";
-
           src = ./.;
           meta.mainProgram = "wait-for-file";
-
           cargoHash = "sha256-+1ouLQpGqZbMFxiQ7k+zh4uii4nbVcP9H1qRcSOGmW8=";
-
-          # Native build inputs for GTK4
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-          ];
-
-          # Libraries needed at build/run time
-          buildInputs = with pkgs; [
-            gtk4
-            gtk3
-            gdk-pixbuf
-          ];
+          nativeBuildInputs = with pkgs; [ pkg-config ];
+          buildInputs = commonInputs ++ (with pkgs; [ gdk-pixbuf ]);
         };
 
         devShell = with pkgs; mkShell {
-          buildInputs = [ cargo rustc rustfmt pre-commit rustPackages.clippy pkg-config gtk4 gtk3 ];
+          buildInputs = [ cargo rustc rustfmt rustPackages.clippy ]
+            ++ commonInputs;
         };
 
-        # For convenience, these let you do `nix run .`, `nix build .`, etc.
         defaultPackage = self.packages.${system}.default;
         defaultApp = self.packages.${system}.default;
       });
 }
-
