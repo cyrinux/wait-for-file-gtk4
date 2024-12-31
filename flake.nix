@@ -17,12 +17,9 @@
           pname = "wait-for-file";
           version = "0.1.0";
 
-          # Use the current directory (which must contain Cargo.toml, Cargo.lock, src/main.rs, etc.)
           src = ./.;
 
-          # A placeholder, so the first build will fail and tell you the correct sha256.
-          # Then copy the correct value from the error message.
-          cargoSha256 = "sha256-uHkydKYGaIsBSFYFxjubZXIyVU4D3g4RlKx+G43J0iw=";
+          cargoHash = "sha256-uHkydKYGaIsBSFYFxjubZXIyVU4D3g4RlKx+G43J0iw=";
 
           # Native build inputs for GTK4
           nativeBuildInputs = with pkgs; [
