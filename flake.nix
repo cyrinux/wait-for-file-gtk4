@@ -22,7 +22,7 @@
           version = "0.1.0";
           src = ./.;
           meta.mainProgram = "wait-for-file";
-          cargoHash = "sha256-+1ouLQpGqZbMFxiQ7k+zh4uii4nbVcP9H1qRcSOGmW8=";
+          cargoHash = "sha256-biegSgRnPJ5Euac0Og3+UI3fWmWwEWNh2yGYOveoCEY=";
           nativeBuildInputs = with pkgs; [ pkg-config ];
           buildInputs = commonInputs ++ (with pkgs; [ gdk-pixbuf ]);
         };
