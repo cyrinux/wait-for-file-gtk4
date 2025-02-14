@@ -22,7 +22,8 @@
           version = "0.1.0";
           src = ./.;
           meta.mainProgram = "wait-for-file";
-          cargoHash = "sha256-biegSgRnPJ5Euac0Og3+UI3fWmWwEWNh2yGYOveoCEY=";
+          cargoHash = "sha256-njcWqwbXviWRXwM5F5ylk7L/DhJbbI6JksEdCBjfMBA=";
+          useFetchCargoVendor = true;
           nativeBuildInputs = with pkgs; [ pkg-config ];
           buildInputs = commonInputs ++ (with pkgs; [ gdk-pixbuf ]);
         };
