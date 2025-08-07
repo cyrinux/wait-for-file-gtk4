@@ -30,6 +30,9 @@ struct Args {
 
     #[arg(short, long)]
     pub icon: Option<String>,
+
+    #[arg(long, help = "Disable automatic triggering of the unlock command on startup")]
+    pub no_auto_unlock: bool,
 }
 
 struct AppState {
@@ -110,6 +113,7 @@ fn setup_window_controls(
     components: Arc<GuiComponents>,
     button_extra: Button,
     button_cancel: Button,
+    no_auto_unlock: bool,
 ) {
     let key_controller = gtk4::EventControllerKey::new();
     let state_clone = Arc::clone(&state);
@@ -133,6 +137,14 @@ fn setup_window_controls(
             let _ = Command::new("sh").arg("-c").arg(cmd).spawn();
         });
     });
+
+    // Auto-trigger the unlock button unless disabled
+    if !no_auto_unlock {
+        let cmd = state.extra_command.clone();
+        thread::spawn(move || {
+            let _ = Command::new("sh").arg("-c").arg(cmd).spawn();
+        });
+    }
 
     let state_clone = Arc::clone(&state);
     let components_clone = Arc::clone(&components);
@@ -189,6 +201,7 @@ fn main() {
             Arc::clone(&components),
             button_extra,
             button_cancel,
+            args.no_auto_unlock,
         );
 
         glib::timeout_add_local(Duration::from_millis(300), move || {
