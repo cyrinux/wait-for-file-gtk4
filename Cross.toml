@@ -1,0 +1,11 @@
+[target.aarch64-unknown-linux-gnu]
+image = "ubuntu:noble"
+pre-build = [
+  "dpkg --add-architecture arm64 && apt-get update && apt-get install -y pkg-config libgtk-4-dev libglib2.0-dev libgdk-pixbuf-2.0-dev libcairo2-dev libpango1.0-dev",
+]
+
+[target.x86_64-unknown-linux-gnu]
+image = "ubuntu:noble"
+pre-build = [
+  "apt-get update && apt-get install -y pkg-config libgtk-4-dev libglib2.0-dev libgdk-pixbuf-2.0-dev libcairo2-dev libpango1.0-dev",
+]
