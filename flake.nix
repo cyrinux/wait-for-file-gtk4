@@ -23,7 +23,6 @@
           src = ./.;
           meta.mainProgram = "wait-for-file";
           cargoHash = "sha256-Jcd6h59xKewliCT71V1ZFPuNJp73OK2qsWtQ77fRbPU=";
-          useFetchCargoVendor = true;
           nativeBuildInputs = with pkgs; [ pkg-config ];
           buildInputs = commonInputs ++ (with pkgs; [ gdk-pixbuf ]);
         };
