@@ -1,9 +1,12 @@
 use clap::Parser;
 use gdk4::Key;
-use glib::MainContext;
+use gio::prelude::{AppInfoExt, FileExt};
+use gio::{AppInfo, FileIcon, ThemedIcon};
+use glib::{Cast, MainContext};
 use gtk4::prelude::*;
 use gtk4::{
-    Application, ApplicationWindow, Box as GtkBox, Button, Image, Label, Orientation, ProgressBar,
+    Application, ApplicationWindow, Box as GtkBox, Button, IconTheme, Image, Label, Orientation,
+    ProgressBar,
 };
 use std::process::Command;
 use std::sync::{
@@ -31,7 +34,10 @@ struct Args {
     #[arg(short, long)]
     pub icon: Option<String>,
 
-    #[arg(long, help = "Disable automatic triggering of the unlock command on startup")]
+    #[arg(
+        long,
+        help = "Disable automatic triggering of the unlock command on startup"
+    )]
     pub no_auto_unlock: bool,
 }
 
@@ -46,34 +52,63 @@ struct GuiComponents {
     app: Application,
 }
 
+fn load_css() {
+    let provider = gtk4::CssProvider::new();
+    provider.load_from_data(
+        "
+        .main-container {
+            padding: 12px;
+        }
+        window {
+            border: 1px solid alpha(@accent_bg_color, 0.6);
+            border-radius: 6px;
+        }
+        ",
+    );
+
+    gtk4::style_context_add_provider_for_display(
+        &gdk4::Display::default().expect("Could not get default display"),
+        &provider,
+        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+}
+
 fn create_main_box(
     icon_spec: Option<String>,
     presence_file: &str,
     extra_label: &str,
+    display: &gdk4::Display,
 ) -> (GtkBox, ProgressBar, Button, Button) {
-    let main_box = GtkBox::new(Orientation::Horizontal, 10);
-    main_box.set_margin_end(20);
+    let main_box = GtkBox::new(Orientation::Horizontal, 12);
+    main_box.add_css_class("main-container");
+    main_box.set_valign(gtk4::Align::Center);
+    main_box.set_hexpand(true);
+    main_box.set_vexpand(true);
 
     if let Some(icon_spec) = icon_spec {
-        let image = if std::path::Path::new(&icon_spec).exists() {
-            Image::from_file(icon_spec)
+        if std::path::Path::new(&icon_spec).exists() {
+            let img = Image::from_file(&icon_spec);
+            img.set_pixel_size(48);
+            img.set_valign(gtk4::Align::Center);
+            main_box.append(&img);
         } else {
-            Image::from_icon_name(&icon_spec)
-        };
-        image.set_icon_size(gtk4::IconSize::Large);
-        image.set_margin_start(20);
-        main_box.append(&image);
+            let icon_theme = IconTheme::for_display(display);
+            if icon_theme.has_icon(&icon_spec) {
+                let img = Image::from_icon_name(&icon_spec);
+                img.set_pixel_size(48);
+                img.set_valign(gtk4::Align::Center);
+                main_box.append(&img);
+            }
+        }
     }
 
-    let vbox = GtkBox::new(Orientation::Vertical, 10);
+    let vbox = GtkBox::new(Orientation::Vertical, 8);
+    vbox.set_valign(gtk4::Align::Center);
     let label = Label::new(Some(&format!("Waiting for file: {}", presence_file)));
-    label.set_margin_bottom(10);
-    label.set_margin_top(10);
     vbox.append(&label);
 
     let progress_bar = ProgressBar::new();
     progress_bar.set_show_text(false);
-    progress_bar.set_margin_bottom(10);
     vbox.append(&progress_bar);
 
     let hbox = GtkBox::new(Orientation::Horizontal, 10);
@@ -88,6 +123,37 @@ fn create_main_box(
     main_box.append(&vbox);
 
     (main_box, progress_bar, button_extra, button_cancel)
+}
+
+fn find_icon_for_command(command: &str) -> Option<String> {
+    let binary_name = command.split_whitespace().next()?;
+
+    let apps = AppInfo::all();
+    for app in apps {
+        let exe_path = app.executable();
+        let exe_name = exe_path.file_name().and_then(|n| n.to_str());
+        let match_found = exe_name.map(|n| n == binary_name).unwrap_or(false)
+            || exe_path.to_str().map(|s| s == binary_name).unwrap_or(false);
+
+        if match_found {
+            if let Some(icon) = app.icon() {
+                if let Some(themed) = icon.downcast_ref::<ThemedIcon>() {
+                    let names = themed.names();
+                    if let Some(name) = names.first() {
+                        return Some(name.to_string());
+                    }
+                }
+                if let Some(file_icon) = icon.downcast_ref::<FileIcon>() {
+                    let file = file_icon.file();
+                    if let Some(path) = file.path() {
+                        return path.to_str().map(String::from);
+                    }
+                }
+            }
+        }
+    }
+
+    None
 }
 
 fn setup_file_watcher(state: Arc<AppState>, tx_file_found: glib::Sender<()>) {
@@ -172,6 +238,8 @@ fn main() {
         .build();
 
     app.connect_activate(move |app| {
+        load_css();
+
         let state = Arc::new(AppState {
             presence_file: args.presence_file.clone(),
             main_command: args.command.clone(),
@@ -182,8 +250,14 @@ fn main() {
         let (tx_file_found, rx_file_found) = MainContext::channel(glib::PRIORITY_DEFAULT);
         setup_file_watcher(Arc::clone(&state), tx_file_found);
 
+        let icon_spec = args
+            .icon
+            .clone()
+            .or_else(|| find_icon_for_command(&args.command));
+
+        let display = gdk4::Display::default().expect("Could not get default display");
         let (main_box, progress_bar, button_extra, button_cancel) =
-            create_main_box(args.icon.clone(), &state.presence_file, &extra_label);
+            create_main_box(icon_spec, &state.presence_file, &extra_label, &display);
 
         let window = ApplicationWindow::builder()
             .application(app)

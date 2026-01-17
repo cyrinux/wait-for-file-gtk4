@@ -19,10 +19,10 @@
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "wait-for-file";
-          version = "0.2.0";
+          version = "0.2.2";
           src = ./.;
           meta.mainProgram = "wait-for-file";
-          cargoHash = "sha256-Jcd6h59xKewliCT71V1ZFPuNJp73OK2qsWtQ77fRbPU=";
+          cargoHash = "sha256-Gd2/9O8utHlcK7S+RhEy0kGtdSQHoVqv+d8Y/KTuhyI=";
           nativeBuildInputs = with pkgs; [ pkg-config ];
           buildInputs = commonInputs ++ (with pkgs; [ gdk-pixbuf ]);
         };
