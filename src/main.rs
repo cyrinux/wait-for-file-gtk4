@@ -126,7 +126,12 @@ fn create_main_box(
 }
 
 fn find_icon_for_command(command: &str) -> Option<String> {
-    let binary_name = command.split_whitespace().next()?;
+    let first_word = command.split_whitespace().next()?;
+    // If the command is a full path, extract just the binary name
+    let binary_name = std::path::Path::new(first_word)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(first_word);
 
     let apps = AppInfo::all();
     for app in apps {
